@@ -28,10 +28,10 @@ else{
  * 
  */
 $read_files= read_files($log_file_dir);
-    foreach ($read_files[0] as $value) {
-      echo"<p>$value</p>";  
-    }
-    print_r($read_files);
-    $result = count($read_files);
-    echo $result;
+
+output_array($read_files);
+
+
+  
+
 ?>

@@ -50,6 +50,29 @@ function check_existance($log_file_dir){
     }
     
 }
+
+
+
+function output_array($readfiles){
+    $read_files = $readfiles;
+    $i=0;
+    while($i < count($read_files)){
+        echo'<table>'; 
+        echo '<tr>';
+            foreach ($read_files[$i] as $value) {
+                $bob= $value;
+                echo'<td>';
+                echo str_pad($bob, 8,"  ",STR_PAD_BOTH);
+                echo'</td>'; 
+
+            }
+
+        echo '</tr>';
+        echo'</table>'; 
+    $i++;
+    }   
+    //print_r($read_files);
+} 
 ?>
 
 
