@@ -14,7 +14,7 @@ function check_existance($log_file_dir){
   
   function read_files($log_file_dir){  
     $log_file_dir=$log_file_dir;
-    $log_array_key= array('ip','time','resource','number','browser'); 
+    $log_array_key= array('ip Address','timestamp','filename','http status code','bandtidth','user agent'); 
     $directory_name = opendir($log_file_dir);
     //not use glob as this limits reuse of code to folders on the server
     while (FALSE !== ($log_file_name = readdir($directory_name))){
@@ -32,7 +32,12 @@ function check_existance($log_file_dir){
             while(!feof($log_entries)){
                 $temp_log_file_string=fgets($log_entries,1024);
                 //echo $temp_log_file_string;
-                $log_line = preg_split('/[\"\[]/', $temp_log_file_string);
+                $log_line = preg_split(' /[\"\)[]/', $temp_log_file_string);
+                $temp_array = array_slice($log_line, 3, 1);
+                $temp_array = preg_split('/[\s]/', $temp_array[0]);
+                array_pop($temp_array);
+                array_shift($temp_array);
+                array_splice($log_line, 3, 1, $temp_array);
                //gets rid of empty key
                 array_pop($log_line);
                 //http://www.php.net/manual/en/function.array-combine.php
@@ -42,35 +47,39 @@ function check_existance($log_file_dir){
                
             } 
        //gets rid of empty key at end
-       array_pop($log_array);
-       return $log_array;
+       array_pop($log_array); 
+       //print_r($log_array);
+       return $log_array; array_pop($log_line);
          }
          //print_r($may);
          
     }
     
 }
-
+/*
+ * outputs and formats 
+ */
 
 
 function output_array($readfiles){
     $read_files = $readfiles;
     $i=0;
+    echo'<table>';
+    echo '<tr><td>'.str_pad('IP Address', 5).'</td><td>'.str_pad('Timestamp',3).'</td><td>'.str_pad('Filename', 3).'</td><td>'.str_pad('HTTP Status Code', 3).'</td><td>'.str_pad('Bandwidth Used', 3).'</td><td>'.str_pad('User Agent',3).'</td></tr>';
     while($i < count($read_files)){
-        echo'<table>'; 
         echo '<tr>';
-            foreach ($read_files[$i] as $value) {
-                $bob= $value;
-                echo'<td>';
-                echo str_pad($bob, 8,"  ",STR_PAD_BOTH);
-                echo'</td>'; 
+        foreach ($read_files[$i] as $value) {
+            echo'<td>';
+            echo $value;
+            echo'</td>'; 
 
             }
 
-        echo '</tr>';
-        echo'</table>'; 
+      echo '</tr>';
+      
     $i++;
     }   
+    echo'</table>'; 
     //print_r($read_files);
 } 
 ?>

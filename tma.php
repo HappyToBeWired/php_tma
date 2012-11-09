@@ -15,7 +15,7 @@ $does_folder_exist=check_existance($log_file_dir);
 
 if ($does_folder_exist === 'folder_exists'){
     //echo 'hello Folder';
-    $read_files= read_files($log_file_dir);
+    $abetter_name_needed= read_files($log_file_dir);
      
     }
     
@@ -27,9 +27,9 @@ else{
 /*reead individual files from log directory
  * 
  */
-$read_files= read_files($log_file_dir);
+$get_some_output=$abetter_name_needed;
 
-output_array($read_files);
+output_array($get_some_output);
 
 
   
