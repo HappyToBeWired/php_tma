@@ -1,87 +1,104 @@
 <?php
 // checks for existance of the folder
-function check_existance($log_file_dir){
-    $log_file_dir = $log_file_dir;
-    if (file_exists($log_file_dir)) {
-        return 'folder_exists';  
-    }
-    else{
-       return 'folder_does_not_exist';
-    }
-    
-  }
-  
-  
-  function read_files($log_file_dir){  
-    $log_file_dir=$log_file_dir;
-    $log_array_key= array('ip Address','timestamp','filename','http status code','bandtidth','user agent'); 
-    $directory_name = opendir($log_file_dir);
-    //not use glob as this limits reuse of code to folders on the server
-    while (FALSE !== ($log_file_name = readdir($directory_name))){
-        //checks existtance of .log files
-        $log_file_name_type_check = explode('.', $log_file_name);
-        if ($log_file_name_type_check[1] === 'log'){
-        //concatenates directory and file name
-            $log_entries = fopen($log_file_dir.$log_file_name, 'r');
-            //creates array with same name as month to hold log files
-            //echo($log_file_name_type_check[0]);
-            $log_array_name = $log_file_name_type_check[0];
-            $log_array = array();
-            //creates sub array with month name
-            //$log_array['month'] = $log_array_name;
-            while(!feof($log_entries)){
-                $temp_log_file_string=fgets($log_entries,1024);
-                //echo $temp_log_file_string;
-                $log_line = preg_split(' /[\"\)[]/', $temp_log_file_string);
-                $temp_array = array_slice($log_line, 3, 1);
-                $temp_array = preg_split('/[\s]/', $temp_array[0]);
-                array_pop($temp_array);
-                array_shift($temp_array);
-                array_splice($log_line, 3, 1, $temp_array);
-               //gets rid of empty key
-                array_pop($log_line);
-                //http://www.php.net/manual/en/function.array-combine.php
-                //meaningful key names
-                $log_line = array_combine($log_array_key, $log_line);
-                array_push( $log_array,$log_line);
-               
-            } 
-       //gets rid of empty key at end
-       array_pop($log_array); 
-       //print_r($log_array);
-       return $log_array; array_pop($log_line);
+class FindsExtractsAndFormats {
+     public $log_file_path = 'logs/';
+     public function check_existance(){
+        if (file_exists($this->log_file_path)) {
+            return 'folder_exists';  
+        }
+        else{
+            return 0;
+        }
+        
+      }
+     //reads the  files
+      public function read_files(){  
+        $log_file_list = array();
+        $directory_name = opendir($this->log_file_path); 
+        //http://php.net/manual/en/function.readdir.php
+        while (FALSE !== ($log_file_name = readdir($directory_name))){
+            if ($log_file_name != "." && $log_file_name != "..") {
+               array_push($log_file_list, $log_file_name);
+            }  
          }
-         //print_r($may);
-         
-    }
-    
+         return $log_file_list;
+       }
+       //formats the files into an array which can be more easily processed
+       public function extract_data_from_files($log_file){
+            $log_file_name=$log_file;
+            $log_array_key= array('ip Address','timestamp','filename','http status code','bandwidth','user agent'); 
+            $log_file_name_type_check = explode('.', $log_file_name);
+            if ($log_file_name_type_check[1] === 'log'){
+                $log_entries = fopen($this->log_file_path.$log_file_name, 'r');
+                $log_array = array();
+                while(!feof($log_entries)){
+                    $temp_log_file_string=fgets($log_entries,1024);
+                    
+                    $log_line = preg_split(' /[\"\)[]/', $temp_log_file_string);
+                    $cut_array = array_slice($log_line, 3, 1);
+                    $temp_array = explode(' ',"$cut_array[0]");
+                    array_pop($temp_array);
+                    array_shift($temp_array);
+                    array_splice($log_line, 3, 1, $temp_array);
+                   //gets rid of empty key
+                    
+                    array_pop($log_line);
+                    //http://www.php.net/manual/en/function.array-combine.php
+                    //meaningful key names
+                    $log_line = array_combine($log_array_key, $log_line);
+                    //if(feof($log_entries))break;
+                    array_push( $log_array,$log_line);                              
+                 } 
+
+           //gets rid of empty key at end
+           array_pop($log_array); 
+           //print_r($log_array);
+           //var_dump($log_array);
+           return $log_array;
+             }
+         } 
 }
-/*
- * outputs and formats 
- */
+//enumerates the required parts of the files and ouputs them as an array
+class EnumerateAndOutput {
+       private $status_code=0;
+       private $article_request=0;
+       private $bandwidth_consumed=0;
+       private $coincidental_404_requests = array();
+       private $article_regex =  '/articles\//';
+       private $all_requests = 0;
+       private $unique_coincidental_404_requests = array();
+       public $return_array = array();
 
 
-function output_array($readfiles){
-    $read_files = $readfiles;
-    $i=0;
-    echo'<table>';
-    echo '<tr><td>'.str_pad('IP Address', 5).'</td><td>'.str_pad('Timestamp',3).'</td><td>'.str_pad('Filename', 3).'</td><td>'.str_pad('HTTP Status Code', 3).'</td><td>'.str_pad('Bandwidth Used', 3).'</td><td>'.str_pad('User Agent',3).'</td></tr>';
-    while($i < count($read_files)){
-        echo '<tr>';
-        foreach ($read_files[$i] as $value) {
-            echo'<td>';
-            echo $value;
-            echo'</td>'; 
+       function enumerate($get_some_output){
+        $enumerated_output =$get_some_output;
+        $i = 0;
 
+        while($i < count($enumerated_output)){
+            if($enumerated_output[$i]['http status code']==='404'){
+                $this->status_code++;
             }
-
-      echo '</tr>';
-      
-    $i++;
-    }   
-    echo'</table>'; 
-    //print_r($read_files);
-} 
+            if(preg_match($this->article_regex, $enumerated_output[$i]['filename'])==1){
+                $this->article_request++;
+            }
+            if($enumerated_output[$i]['bandwidth']){
+                $this->bandwidth_consumed = $enumerated_output[$i]['bandwidth'] + $this->bandwidth_consumed;
+            }
+            if($enumerated_output[$i]['http status code']==='404'){
+                array_push($this->coincidental_404_requests,$enumerated_output[$i]['filename']);
+            }
+            
+            $i++;
+            $this->all_requests = $i;
+            $this->unique_coincidental_404_requests=array_unique($this->coincidental_404_requests);   
+        }
+        
+        $this->return_array['status code']=$this->status_code;
+        $this->return_array['article request']=$this->article_request;
+        $this->return_array['bandwidth consumed']=$this->bandwidth_consumed;
+        $this->return_array['total views']=$this->all_requests;
+    } 
+}
 ?>
 
 
